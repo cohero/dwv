@@ -1,7 +1,11 @@
 // namespaces
 var dwv = dwv || {};
 dwv.draw = dwv.draw || {};
-// external
+/**
+ * The Konva namespace.
+ * @external Konva
+ * @see https://konvajs.org/
+ */
 var Konva = Konva || {};
 
 /**
@@ -99,7 +103,6 @@ dwv.draw.getHierarchyLog = function (layer, prefix) {
  * Draw controller.
  * @constructor
  * @param {Object} drawDiv The HTML div used to store the drawings.
- * @external Konva
  */
 dwv.DrawController = function (drawDiv)
 {
@@ -496,21 +499,53 @@ dwv.DrawController = function (drawDiv)
     };
 
     /**
+     * Delete a Draw from the stage.
+     * @param {Number} groupId The group id of the group to delete.
+     * @param {Object} cmdCallback The DeleteCommand callback.
+     * @param {Object} exeCallback The callback to call once the DeleteCommand has been executed.
+     */
+    this.deleteDrawGroupId = function (groupId, cmdCallback, exeCallback) {
+        var groups = drawLayer.getChildren();
+        var groupToDelete = groups.getChildren( function (node) {
+            return node.id() === groupId;
+        });
+        if ( groupToDelete.length === 1 ) {
+            this.deleteDrawGroup(groupToDelete[0], cmdCallback, exeCallback);
+        } else if ( groupToDelete.length === 0 ) {
+            console.warn("Can't delete group with id:'" + groupId +
+                "', cannot find it.");
+        } else {
+            console.warn("Can't delete group with id:'" + groupId +
+                "', too many with the same id.");
+        }
+    };
+
+    /**
+     * Delete a Draw from the stage.
+     * @param {Object} group The group to delete.
+     * @param {Object} cmdCallback The DeleteCommand callback.
+     * @param {Object} exeCallback The callback to call once the DeleteCommand has been executed.
+     */
+    this.deleteDrawGroup = function (group, cmdCallback, exeCallback) {
+        var shape = group.getChildren( dwv.draw.isNodeNameShape )[0];
+        var shapeDisplayName = dwv.tool.GetShapeDisplayName(shape);
+        var delcmd = new dwv.tool.DeleteGroupCommand(
+            group, shapeDisplayName, drawLayer);
+        delcmd.onExecute = cmdCallback;
+        delcmd.onUndo = cmdCallback;
+        delcmd.execute();
+        exeCallback(delcmd);
+    };
+
+    /**
      * Delete all Draws from the stage.
      * @param {Object} cmdCallback The DeleteCommand callback.
      * @param {Object} exeCallback The callback to call once the DeleteCommand has been executed.
      */
     this.deleteDraws = function (cmdCallback, exeCallback) {
-        var delcmd;
         var groups = drawLayer.getChildren();
         while (groups.length) {
-            var shape = groups[0].getChildren( dwv.draw.isNodeNameShape )[0];
-            delcmd = new dwv.tool.DeleteGroupCommand( groups[0],
-                dwv.tool.GetShapeDisplayName(shape), drawLayer);
-            delcmd.onExecute = cmdCallback;
-            delcmd.onUndo = cmdCallback;
-            delcmd.execute();
-            exeCallback(delcmd);
+            this.deleteDrawGroup(groups[0], cmdCallback, exeCallback);
         }
     };
 

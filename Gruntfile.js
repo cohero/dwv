@@ -1,5 +1,7 @@
 /* global module */
 module.exports = function(grunt) {
+    // copy target for dev deploy
+    // call: yarn run dev --copy-target=../dwv-jqui
     var cpTarget = grunt.option('copy-target') || '../dwv-jqmobile';
     // Project configuration.
     grunt.initConfig({
@@ -57,7 +59,7 @@ module.exports = function(grunt) {
                 src: ['src/**/*.js', 'tests/**/*.js', 'resources/doc/readme-doc.md'],
                 options: {
                     destination: 'build/doc',
-                    template: 'node_modules/ink-docstrap/template',
+                    template: 'node_modules/docdash',
                     configure: 'resources/doc/jsdoc.conf.json'
                 }
             }
@@ -77,7 +79,7 @@ module.exports = function(grunt) {
             }
         },
         watch: {
-            main: {
+            lint: {
                 files: ['**/*.js', '!**/node_modules/**'],
                 tasks: ['jshint'],
                 options: {
@@ -85,14 +87,7 @@ module.exports = function(grunt) {
                     livereload: true
                 }
             },
-            cmd: {
-                files: ['**/*.js', '!**/node_modules/**'],
-                tasks: ['test'],
-                options: {
-                    spawn: false
-                }
-            },
-            dev: {
+            build: {
                 files: ['**/*.js', '!**/node_modules/**'],
                 tasks: ['concat', 'copy'],
                 options: {
@@ -123,10 +118,10 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-qunit-istanbul');
 
     // tasks
-    grunt.registerTask('test', ['jshint', 'qunit']);
-    grunt.registerTask('start', ['connect', 'watch:main']);
-    grunt.registerTask('start-cmd', ['watch:cmd']);
-    grunt.registerTask('dev', ['watch:dev']);
+    grunt.registerTask('lint', ['jshint']);
+    grunt.registerTask('test', ['connect', 'watch:lint']);
+    grunt.registerTask('test-ci', ['qunit']);
     grunt.registerTask('build', ['concat', 'uglify']);
     grunt.registerTask('doc', ['jsdoc']);
+    grunt.registerTask('dev', ['watch:build']);
 };
